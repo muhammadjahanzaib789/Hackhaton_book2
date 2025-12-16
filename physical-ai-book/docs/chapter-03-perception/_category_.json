@@ -1,0 +1,8 @@
+{
+  "label": "Chapter 3: Perception",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn computer vision and object detection for humanoid robots using OpenCV, YOLO, and Isaac ROS perception pipelines."
+  }
+}

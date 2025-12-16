@@ -1,0 +1,8 @@
+{
+  "label": "Chapter 6: LLM Integration",
+  "position": 6,
+  "link": {
+    "type": "generated-index",
+    "description": "Connect large language models to robotic systems for natural language understanding, task planning, and intelligent control."
+  }
+}

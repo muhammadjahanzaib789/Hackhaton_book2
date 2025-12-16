@@ -1,0 +1,8 @@
+{
+  "label": "Chapter 5: Manipulation",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn robot arm kinematics, MoveIt2 motion planning, and grasping strategies for humanoid manipulation."
+  }
+}

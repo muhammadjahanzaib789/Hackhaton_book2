@@ -1,0 +1,72 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Build outputs
+dist/
+build/
+.docusaurus/
+.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+
+# Claude and AI tool configs (keep local only)
+.claude-code-router/
+.claude.json.backup
+.claude.json.corrupted.*
+.cursor/
+.gemini/
+
+# User-specific files
+.gitconfig
+.ssh/
+.streamlit/
+*.lnk
+
+# Windows system files
+NTUSER.DAT*
+ntuser.*
+AppData/
+Local Settings/
+Cookies/
+Recent/
+SendTo/
+Templates/
+Start Menu/

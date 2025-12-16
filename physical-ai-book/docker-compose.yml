@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Documentation server (Docusaurus)
+  docs:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm start -- --host 0.0.0.0"
+    environment:
+      - NODE_ENV=development
+
+  # ROS 2 + Gazebo development environment
+  ros2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - ROS_DOMAIN_ID=0
+    network_mode: host
+    privileged: true
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # Ollama LLM server (local inference)
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:
+
+# Usage:
+# Start documentation server: docker compose up docs
+# Start ROS 2 environment: docker compose up ros2
+# Start Ollama: docker compose up ollama
+# Start all: docker compose up

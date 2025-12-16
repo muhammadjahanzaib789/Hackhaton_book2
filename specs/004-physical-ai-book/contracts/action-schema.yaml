@@ -1,0 +1,302 @@
+# Action Schema Contract
+# Defines structured output format for LLM → Robot action translation
+# Version: 1.0.0
+
+openapi: 3.0.0
+info:
+  title: Physical AI Action Schema
+  description: |
+    Structured action schemas that constrain LLM outputs to valid robot commands.
+    All LLM-generated plans must conform to these schemas before execution.
+  version: 1.0.0
+
+components:
+  schemas:
+    ActionRequest:
+      type: object
+      required:
+        - prompt
+        - robot_state
+        - timeout_ms
+      properties:
+        prompt:
+          type: string
+          description: Natural language command from user
+          example: "bring me the red cup from the kitchen table"
+        robot_state:
+          $ref: '#/components/schemas/RobotState'
+        timeout_ms:
+          type: integer
+          minimum: 100
+          maximum: 30000
+          description: Maximum time to wait for LLM response
+        context:
+          type: object
+          additionalProperties: true
+          description: Additional context for LLM reasoning
+
+    RobotState:
+      type: object
+      required:
+        - position
+        - battery_level
+      properties:
+        position:
+          $ref: '#/components/schemas/Pose3D'
+        battery_level:
+          type: number
+          minimum: 0
+          maximum: 100
+        visible_objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectedObject'
+        joint_states:
+          type: object
+          additionalProperties:
+            type: number
+        gripper_state:
+          type: string
+          enum: [open, closed, holding]
+
+    Pose3D:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          description: X position in meters
+        y:
+          type: number
+          description: Y position in meters
+        z:
+          type: number
+          description: Z position in meters
+        roll:
+          type: number
+          description: Roll angle in radians
+        pitch:
+          type: number
+          description: Pitch angle in radians
+        yaw:
+          type: number
+          description: Yaw angle in radians
+
+    DetectedObject:
+      type: object
+      required:
+        - id
+        - label
+        - position
+        - confidence
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+          example: "red_cup"
+        position:
+          $ref: '#/components/schemas/Pose3D'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        bounding_box:
+          type: object
+          properties:
+            width:
+              type: number
+            height:
+              type: number
+            depth:
+              type: number
+
+    ActionResponse:
+      type: object
+      required:
+        - action_type
+        - parameters
+        - confidence
+      properties:
+        action_type:
+          type: string
+          enum:
+            - navigate
+            - grasp
+            - place
+            - speak
+            - wait
+            - look
+            - sequence
+          description: Type of action to execute
+        parameters:
+          oneOf:
+            - $ref: '#/components/schemas/NavigateParams'
+            - $ref: '#/components/schemas/GraspParams'
+            - $ref: '#/components/schemas/PlaceParams'
+            - $ref: '#/components/schemas/SpeakParams'
+            - $ref: '#/components/schemas/WaitParams'
+            - $ref: '#/components/schemas/LookParams'
+            - $ref: '#/components/schemas/SequenceParams'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: LLM confidence in this action (execute if > 0.7)
+        reasoning:
+          type: string
+          description: Brief explanation of why this action was chosen
+        fallback:
+          $ref: '#/components/schemas/ActionResponse'
+          description: Action to execute if this one fails
+
+    NavigateParams:
+      type: object
+      required:
+        - target
+      properties:
+        target:
+          oneOf:
+            - $ref: '#/components/schemas/Pose3D'
+            - type: string
+              description: Named location (e.g., "kitchen", "charging_station")
+        speed:
+          type: string
+          enum: [slow, normal, fast]
+          default: normal
+        avoid_obstacles:
+          type: boolean
+          default: true
+        timeout_ms:
+          type: integer
+          minimum: 1000
+          maximum: 60000
+          default: 30000
+
+    GraspParams:
+      type: object
+      required:
+        - target_object
+      properties:
+        target_object:
+          type: string
+          description: Object ID or label to grasp
+        grasp_type:
+          type: string
+          enum: [pinch, power, side]
+          default: power
+        approach_direction:
+          type: string
+          enum: [top, side, front]
+          default: top
+        force_limit:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Maximum grip force (percentage)
+          default: 50
+
+    PlaceParams:
+      type: object
+      required:
+        - target_location
+      properties:
+        target_location:
+          oneOf:
+            - $ref: '#/components/schemas/Pose3D'
+            - type: string
+              description: Named location or surface
+        placement_type:
+          type: string
+          enum: [drop, gentle, precise]
+          default: gentle
+
+    SpeakParams:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          maxLength: 500
+        language:
+          type: string
+          default: en-US
+        volume:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.7
+
+    WaitParams:
+      type: object
+      required:
+        - duration_ms
+      properties:
+        duration_ms:
+          type: integer
+          minimum: 100
+          maximum: 30000
+        reason:
+          type: string
+          description: Why waiting (for logging)
+
+    LookParams:
+      type: object
+      required:
+        - target
+      properties:
+        target:
+          oneOf:
+            - $ref: '#/components/schemas/Pose3D'
+            - type: string
+              description: Object label or named direction
+        track:
+          type: boolean
+          default: false
+          description: Continuously track target
+
+    SequenceParams:
+      type: object
+      required:
+        - actions
+      properties:
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResponse'
+          minItems: 2
+          maxItems: 10
+        parallel:
+          type: boolean
+          default: false
+          description: Execute actions in parallel (if safe)
+        stop_on_failure:
+          type: boolean
+          default: true
+
+    ValidationResult:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              severity:
+                type: string
+                enum: [error, warning]
+        sanitized_action:
+          $ref: '#/components/schemas/ActionResponse'
+          description: Corrected action if validation found fixable issues

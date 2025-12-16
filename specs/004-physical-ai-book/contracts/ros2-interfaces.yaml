@@ -1,0 +1,354 @@
+# ROS 2 Interface Contracts
+# Defines all ROS 2 topics, services, and actions for the capstone system
+# Version: 1.0.0
+
+metadata:
+  title: Physical AI ROS 2 Interfaces
+  description: Complete interface definitions for humanoid robot capstone
+  ros2_distro: humble
+  version: 1.0.0
+
+# =============================================================================
+# TOPICS - Continuous data streams
+# =============================================================================
+topics:
+
+  # Voice Input Component
+  - name: /voice/audio_raw
+    message_type: audio_common_msgs/msg/AudioData
+    direction: publish
+    qos: sensor_data
+    description: Raw audio from microphone
+    component: voice_input
+
+  - name: /voice/transcript
+    message_type: std_msgs/msg/String
+    direction: publish
+    qos: reliable
+    description: Transcribed text from speech recognition
+    component: voice_input
+
+  # Vision Component
+  - name: /camera/image_raw
+    message_type: sensor_msgs/msg/Image
+    direction: publish
+    qos: sensor_data
+    description: Raw camera image
+    component: vision
+
+  - name: /camera/depth
+    message_type: sensor_msgs/msg/Image
+    direction: publish
+    qos: sensor_data
+    description: Depth image from RGBD sensor
+    component: vision
+
+  - name: /vision/detections
+    message_type: vision_msgs/msg/Detection2DArray
+    direction: publish
+    qos: reliable
+    description: Detected objects with bounding boxes
+    component: vision
+
+  - name: /vision/scene_understanding
+    message_type: std_msgs/msg/String  # JSON encoded scene graph
+    direction: publish
+    qos: reliable
+    description: High-level scene understanding
+    component: vision
+
+  # Navigation Component
+  - name: /scan
+    message_type: sensor_msgs/msg/LaserScan
+    direction: publish
+    qos: sensor_data
+    description: LIDAR scan data
+    component: navigation
+
+  - name: /odom
+    message_type: nav_msgs/msg/Odometry
+    direction: publish
+    qos: sensor_data
+    description: Robot odometry
+    component: navigation
+
+  - name: /map
+    message_type: nav_msgs/msg/OccupancyGrid
+    direction: publish
+    qos: transient_local
+    description: Environment map
+    component: navigation
+
+  - name: /cmd_vel
+    message_type: geometry_msgs/msg/Twist
+    direction: subscribe
+    qos: reliable
+    description: Velocity commands for base
+    component: navigation
+
+  # Manipulation Component
+  - name: /joint_states
+    message_type: sensor_msgs/msg/JointState
+    direction: publish
+    qos: sensor_data
+    description: Current joint positions and velocities
+    component: manipulation
+
+  - name: /gripper/state
+    message_type: std_msgs/msg/String
+    direction: publish
+    qos: reliable
+    description: Gripper state (open/closed/holding)
+    component: manipulation
+
+  # LLM Planning Component
+  - name: /llm/plan
+    message_type: std_msgs/msg/String  # JSON encoded ActionResponse
+    direction: publish
+    qos: reliable
+    description: Current task plan from LLM
+    component: llm_task_decomposition
+
+  - name: /llm/status
+    message_type: std_msgs/msg/String
+    direction: publish
+    qos: reliable
+    description: LLM reasoning status
+    component: llm_task_decomposition
+
+# =============================================================================
+# SERVICES - Request/Response patterns
+# =============================================================================
+services:
+
+  # Intent Understanding
+  - name: /intent/parse
+    service_type: custom_interfaces/srv/ParseIntent
+    description: Parse natural language into structured intent
+    component: intent_understanding
+    request:
+      - name: text
+        type: string
+        description: Natural language input
+      - name: context
+        type: string
+        description: JSON encoded context
+    response:
+      - name: intent
+        type: string
+        description: Identified intent category
+      - name: entities
+        type: string
+        description: JSON encoded extracted entities
+      - name: confidence
+        type: float64
+        description: Parsing confidence
+
+  # LLM Task Decomposition
+  - name: /llm/decompose_task
+    service_type: custom_interfaces/srv/DecomposeTask
+    description: Break high-level goal into action sequence
+    component: llm_task_decomposition
+    request:
+      - name: goal
+        type: string
+        description: High-level goal description
+      - name: robot_state
+        type: string
+        description: JSON encoded robot state
+      - name: timeout_ms
+        type: int32
+        description: Max inference time
+    response:
+      - name: actions
+        type: string
+        description: JSON encoded ActionResponse array
+      - name: reasoning
+        type: string
+        description: LLM reasoning trace
+      - name: success
+        type: bool
+        description: Whether decomposition succeeded
+
+  # Vision Queries
+  - name: /vision/find_object
+    service_type: custom_interfaces/srv/FindObject
+    description: Search for specific object in scene
+    component: vision
+    request:
+      - name: object_label
+        type: string
+        description: Object to find
+      - name: timeout_ms
+        type: int32
+        description: Search timeout
+    response:
+      - name: found
+        type: bool
+        description: Whether object was found
+      - name: position
+        type: geometry_msgs/msg/PoseStamped
+        description: Object position if found
+      - name: confidence
+        type: float64
+        description: Detection confidence
+
+  # Safety Validation
+  - name: /safety/validate_action
+    service_type: custom_interfaces/srv/ValidateAction
+    description: Check if action is safe to execute
+    component: integration
+    request:
+      - name: action
+        type: string
+        description: JSON encoded ActionResponse
+      - name: robot_state
+        type: string
+        description: Current robot state
+    response:
+      - name: valid
+        type: bool
+        description: Whether action is safe
+      - name: errors
+        type: string[]
+        description: Validation errors if any
+      - name: sanitized_action
+        type: string
+        description: Corrected action if fixable
+
+# =============================================================================
+# ACTIONS - Long-running tasks with feedback
+# =============================================================================
+actions:
+
+  # Navigation Action
+  - name: /navigate_to_pose
+    action_type: nav2_msgs/action/NavigateToPose
+    description: Navigate to specified pose
+    component: navigation
+    goal:
+      - name: pose
+        type: geometry_msgs/msg/PoseStamped
+        description: Target pose
+    feedback:
+      - name: current_pose
+        type: geometry_msgs/msg/PoseStamped
+        description: Current robot pose
+      - name: distance_remaining
+        type: float32
+        description: Distance to goal
+      - name: estimated_time_remaining
+        type: builtin_interfaces/msg/Duration
+        description: Time estimate
+    result:
+      - name: success
+        type: bool
+        description: Navigation succeeded
+      - name: error_code
+        type: int16
+        description: Error code if failed
+
+  # Manipulation Actions
+  - name: /grasp_object
+    action_type: custom_interfaces/action/GraspObject
+    description: Grasp specified object
+    component: manipulation
+    goal:
+      - name: object_id
+        type: string
+        description: Target object ID
+      - name: grasp_type
+        type: string
+        description: Grasp strategy (pinch/power/side)
+      - name: force_limit
+        type: float32
+        description: Max grip force percentage
+    feedback:
+      - name: phase
+        type: string
+        description: Current phase (approach/contact/grip/lift)
+      - name: gripper_position
+        type: float32
+        description: Current gripper opening
+    result:
+      - name: success
+        type: bool
+        description: Grasp succeeded
+      - name: object_secured
+        type: bool
+        description: Object confirmed in gripper
+
+  - name: /place_object
+    action_type: custom_interfaces/action/PlaceObject
+    description: Place held object at location
+    component: manipulation
+    goal:
+      - name: target_pose
+        type: geometry_msgs/msg/PoseStamped
+        description: Target placement pose
+      - name: placement_type
+        type: string
+        description: Placement strategy (drop/gentle/precise)
+    feedback:
+      - name: phase
+        type: string
+        description: Current phase (approach/lower/release/retract)
+    result:
+      - name: success
+        type: bool
+        description: Placement succeeded
+
+  # Composite Action for Capstone
+  - name: /execute_task_plan
+    action_type: custom_interfaces/action/ExecuteTaskPlan
+    description: Execute complete LLM-generated task plan
+    component: integration
+    goal:
+      - name: plan
+        type: string
+        description: JSON encoded action sequence
+      - name: validate_before_execute
+        type: bool
+        description: Run safety validation
+    feedback:
+      - name: current_action_index
+        type: int32
+        description: Which action is executing
+      - name: current_action_type
+        type: string
+        description: Type of current action
+      - name: progress_percentage
+        type: float32
+        description: Overall progress
+    result:
+      - name: success
+        type: bool
+        description: All actions completed
+      - name: completed_actions
+        type: int32
+        description: Number of actions completed
+      - name: failure_reason
+        type: string
+        description: Reason if failed
+
+# =============================================================================
+# QOS PROFILES
+# =============================================================================
+qos_profiles:
+  sensor_data:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 10
+
+  reliable:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 10
+
+  transient_local:
+    reliability: reliable
+    durability: transient_local
+    history: keep_last
+    depth: 1

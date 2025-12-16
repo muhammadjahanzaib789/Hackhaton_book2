@@ -1,0 +1,8 @@
+{
+  "label": "Chapter 4: Navigation",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn SLAM, path planning, and autonomous navigation with Nav2 for humanoid robots."
+  }
+}
