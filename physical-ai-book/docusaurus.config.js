@@ -11,9 +11,9 @@ const config = {
 
   // GitHub Pages deployment configuration
   url: 'https://muhammadjahanzaib789.github.io',
-  baseUrl: '/physical-ai-book/',
+  baseUrl: '/',
   organizationName: 'muhammadjahanzaib789',
-  projectName: 'physical-ai-book',
+  projectName: 'Hackhaton_book2',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
