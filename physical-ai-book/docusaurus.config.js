@@ -10,9 +10,9 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // GitHub Pages deployment configuration
-  url: 'https://your-org.github.io',
+  url: 'https://muhammadjahanzaib789.github.io',
   baseUrl: '/physical-ai-book/',
-  organizationName: 'your-org',
+  organizationName: 'muhammadjahanzaib789',
   projectName: 'physical-ai-book',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
@@ -64,7 +64,7 @@ const config = {
             label: 'Book',
           },
           {
-            href: 'https://github.com/your-org/physical-ai-book',
+            href: 'https://github.com/muhammadjahanzaib789/Hackhaton_book2',
             label: 'GitHub',
             position: 'right',
           },
@@ -96,7 +96,7 @@ const config = {
             items: [
               {
                 label: 'GitHub Discussions',
-                href: 'https://github.com/your-org/physical-ai-book/discussions',
+                href: 'https://github.com/muhammadjahanzaib789/Hackhaton_book2',
               },
               {
                 label: 'ROS Discourse',
@@ -109,7 +109,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/your-org/physical-ai-book',
+                href: 'https://github.com/muhammadjahanzaib789/Hackhaton_book2',
               },
               {
                 label: 'ROS 2 Documentation',
